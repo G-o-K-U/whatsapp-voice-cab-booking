@@ -2,7 +2,7 @@
 
 A voice-first WhatsApp assistant that helps elders book cabs easily by speaking naturally and selecting locations
 
-This project was inspired by a real problem: my mother finds modern cab apps confusing, especially typing addresses and choosing locations on maps. This assistant removes those steps by letting users send a voice note on WhatsApp and then confirming the pickup location visually.
+This project was inspired by a real problem: my mother finds modern cab apps confusing, especially typing addresses and choosing locations on maps. This assistant removes those steps by letting users send a voice note on WhatsApp and then confirming the  location visually.
 
 # ✨ What this does
 
@@ -46,7 +46,7 @@ Send deep links for Uber/Ola rides
 ```
 Location Context
 
-The last confirmed drop latitude/longitude, if available, is reused as context for future searches.
+The last confirmed  latitude/longitude, if available, is reused as context for future searches.
 This dramatically improves relevance without asking the user for their location.
 
 
@@ -57,7 +57,7 @@ Typing is the biggest barrier for elders. The entire flow is optimized for voice
 
 **2. Location as context, not constraint**
 
-Instead of forcing nearest-distance ranking, the last known drop location is used to bias results at the city/area level, improving recognition over strict proximity.
+Instead of forcing nearest-distance ranking, the last known  location is used to bias results at the city/area level, improving recognition over strict proximity.
 
 **3. Explicit state handling**
 
@@ -75,7 +75,7 @@ Rather than asking users to confirm text addresses, the system shows images and 
 - Workflow Orchestration: n8n (used for rapid prototyping)
 - Speech-to-Text: Deepgram (Hindi + Hinglish)
 - Places & Maps: Google Places API, Places Photos, Static Maps
-- State Storage: n8n Data Tables (session + last drop location)
+- State Storage: n8n Data Tables (session + last  location)
 
 > Note: n8n was intentionally used to prototype quickly. The system is designed to be easily portable to a lightweight serverless backend (e.g., Cloudflare Workers).
 
