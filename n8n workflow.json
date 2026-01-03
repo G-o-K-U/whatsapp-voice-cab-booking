@@ -1,0 +1,1073 @@
+{
+  "name": "whatsapp voice agent for cab booking",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-voice",
+        "responseMode": "lastNode",
+        "responseData": "noData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        4320,
+        432
+      ],
+      "id": "d4417cfb-b584-4e5b-9e66-719a8e504eaa",
+      "name": "Webhook",
+      "webhookId": "4459ef62-5f88-46ee-aae3-c9bdb1143d95"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.body.MediaUrl0 }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "audio"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        4768,
+        432
+      ],
+      "id": "4bf45be6-209a-4f27-92f5-bb941cc2e1c5",
+      "name": "Download voice note",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "Jm15E4fqwOOsrcud",
+          "name": "Twilio creds"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.deepgram.com/v1/listen",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "nova-3"
+            },
+            {
+              "name": "language",
+              "value": "hi"
+            },
+            {
+              "name": "punctuate",
+              "value": "true"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-type",
+              "value": "audio/ogg"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "audio",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        4992,
+        432
+      ],
+      "id": "11416149-9b98-49c5-b443-803ef24837a4",
+      "name": "Transrcibe voice",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "btY7nYftoSGYxUAu",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://maps.googleapis.com/maps/api/place/textsearch/json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{ $json.text }}"
+            },
+            {
+              "name": "region",
+              "value": "in"
+            },
+            {
+              "name": "location",
+              "value": "={{ $json.last_lat }},{{ $json.last_lng }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        5664,
+        112
+      ],
+      "id": "041451bf-481b-4184-b8c0-549ef7763f94",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "W8TZ1dvY2E66v4O4",
+          "name": "Query Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = $json.results || [];\n\nif (results.length === 0) {\n  throw new Error(\"No places found\");\n}\n\nreturn results.slice(0, 3).map((place, i) => ({\n  json: {\n    option: i + 1,\n    name: place.name,\n    address: place.formatted_address,\n    lat: place.geometry.location.lat,\n    lng: place.geometry.location.lng,\n    place_id: place.place_id,\n    photo_ref: place.photos?.[0]?.photo_reference || null\n  }\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5888,
+        112
+      ],
+      "id": "979da869-acc8-4c91-8fc5-112b7978b735",
+      "name": "Select top 3 locations"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "ZBdq8NYHweYlTZ1n",
+          "mode": "list",
+          "cachedResultName": "whatsapp_place_options",
+          "cachedResultUrl": "/projects/UulTCO4DzLs0ECv8/datatables/ZBdq8NYHweYlTZ1n"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "from",
+              "keyValue": "={{ $json.from }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "from": "={{ $json.from }}",
+            "options": "={{ $json.options.toJsonString()}}",
+            "to": "={{ $json.to }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "from",
+              "displayName": "from",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "to",
+              "displayName": "to",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "options",
+              "displayName": "options",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        6784,
+        192
+      ],
+      "id": "56c8d4b1-9cac-48dc-8cfc-7c80da70b073",
+      "name": "Store data"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        6560,
+        192
+      ],
+      "id": "b03e1ba8-18c6-4b17-bc4f-629ae6b470e6",
+      "name": "Add from & to fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    from: $json.body.From,\n    to: $json.body.To\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4992,
+        192
+      ],
+      "id": "bfee4bb3-cf7c-4b3e-87d1-21f3342aea32",
+      "name": "Get from and to fields"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "65a7ba7c-686b-47b0-ba5c-54affe0f8cf4",
+              "leftValue": "={{ $json.body.NumMedia }}",
+              "rightValue": "1",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        4544,
+        576
+      ],
+      "id": "573b0665-c349-468f-ab1c-e7dd9062d980",
+      "name": "voice or text"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = ($json.body.Body || \"\").trim();\nconst choice = parseInt(body, 10);\n\n// Allow only 1, 2, or 3\nif (![1, 2, 3].includes(choice)) {\n  throw new Error(\"Invalid selection. Expected 1, 2, or 3.\");\n}\n\nreturn [{\n  json: {\n    from: $json.body.From,   // WhatsApp user number\n    choice             // Selected option number\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4992,
+        672
+      ],
+      "id": "848c80ea-69ff-461d-be6b-b8e47a4430a1",
+      "name": "Validate reply"
+    },
+    {
+      "parameters": {
+        "jsCode": "const GOOGLE_API_KEY = \"<add API Key>\";\n\nreturn items.map(item => {\n  let imageUrl;\n\n  if (item.json.photo_ref) {\n    imageUrl =\n      `https://maps.googleapis.com/maps/api/place/photo` +\n      `?maxwidth=600` +\n      `&photo_reference=${item.json.photo_ref}` +\n      `&key=${GOOGLE_API_KEY}`;\n  } else {\n    // fallback to static map\n    imageUrl =\n      `https://maps.googleapis.com/maps/api/staticmap` +\n      `?center=${item.json.lat},${item.json.lng}` +\n      `&zoom=17&size=600x400` +\n      `&markers=color:red%7C${item.json.lat},${item.json.lng}` +\n      `&key=${GOOGLE_API_KEY}`;\n  }\n\n  return {\n    json: {\n      ...item.json,\n      image_url: imageUrl\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6112,
+        112
+      ],
+      "id": "40083b21-31ae-4845-94f5-f768ea2c1a96",
+      "name": "Extract images links for the options"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.twilio.com/2010-04-01/Accounts/<accountsid>/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "From",
+              "value": "={{ $json.from }}"
+            },
+            {
+              "name": "To",
+              "value": "={{ $json.to }}"
+            },
+            {
+              "name": "Body",
+              "value": "={{ $json.message }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        6112,
+        496
+      ],
+      "id": "3e2ed6cf-5f0b-4070-ac14-33c68326b5d7",
+      "name": "Send cab link message on whatsapp",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "Jm15E4fqwOOsrcud",
+          "name": "Twilio creds"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const { lat, lng, name } = $json;\n\n// Uber deep link\nconst uber =\n  `https://m.uber.com/ul/?action=setPickup` +\n  `&dropoff[latitude]=${lat}` +\n  `&dropoff[longitude]=${lng}` +\n  `&dropoff[nickname]=${encodeURIComponent(name)}`;\n\n// Ola deep link\nconst ola =\n  `https://book.olacabs.com/?drop_lat=${lat}&drop_lng=${lng}`;\n\nreturn [{\n  json: {\n    to: $json.from,\n    from: $json.to,\n    message:\n      `📍 Drop location selected:\\n${name}\\n\\n` +\n      `🚕 Book your cab\\n\\n` +\n      `Uber 👇\\n${uber}\\n\\n` +\n      `Ola 👇\\n${ola}`\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5888,
+        496
+      ],
+      "id": "89080b7c-f8ba-422c-9bfd-8891e3c2a7f4",
+      "name": "Create cab links message"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "56423adb-fc01-425f-ad0b-48c6eb2e2b06",
+              "leftValue": "={{ $json.body.NumMedia }}",
+              "rightValue": "0",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        4768,
+        672
+      ],
+      "id": "6013d707-704c-455d-960f-c02d95774a99",
+      "name": "Is non media?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const transcript =\n  $json.results?.channels?.[0]?.alternatives?.[0]?.transcript || \"\";\n\nif (!transcript) {\n  throw new Error(\"No transcript detected\");\n}\n\nlet text = transcript.toLowerCase();\n\n// Common Hindi/English filler words to remove\nconst fillers = [\n  \"ke paas\",\n  \"ke pass\",\n  \"ke samne\",\n  \"ke saamne\",\n  \"ke paas mein\",\n  \"mein\",\n  \"wala\",\n  \"wala\",\n  \"near\",\n  \"close to\",\n  \"please\",\n  \"pickup\",\n  \"pick me up\"\n];\n\nfillers.forEach(f => {\n  text = text.replace(new RegExp(f, \"gi\"), \"\");\n});\n\n// Clean extra spaces\ntext = text.replace(/\\s+/g, \" \").trim();\n\nreturn [{\n  json: {\n    text: text\n  }\n}];\n\nreturn [{\n  text: transcript.trim()\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5216,
+        432
+      ],
+      "id": "dbb90dcb-0a57-463d-b270-38e307466fa3",
+      "name": "Extract & clean Transcript"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "options",
+        "include": "allFieldsExcept",
+        "fieldsToExclude": "place_id, photo_ref",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        6336,
+        112
+      ],
+      "id": "2c4e9835-d70e-4d9c-81d3-c21fc9d843f3",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "advanced": true,
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "choice",
+              "field2": "option"
+            }
+          ]
+        },
+        "outputDataFrom": "input2",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        5664,
+        672
+      ],
+      "id": "55f09890-1bac-4f5d-9341-7c7e0a368bda",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "const options = JSON.parse($json.options);\n\nreturn options.map(opt => ({\n  json: {\n    ...opt,\n    from: $json.from,\n    to: $json.to,\n  }\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7008,
+        192
+      ],
+      "id": "520201ae-6279-44a7-8fd4-a0c51ca415f8",
+      "name": "Expand options"
+    },
+    {
+      "parameters": {
+        "jsCode": "const options = JSON.parse($json.options);\n\nreturn options.map(opt => ({\n  json: {\n    ...opt,\n    from: $json.from,\n    to: $json.to,\n  }\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5440,
+        736
+      ],
+      "id": "9d57491e-d040-4c38-a3ff-9d5090125fd9",
+      "name": "Expand options1"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "ZBdq8NYHweYlTZ1n",
+          "mode": "list",
+          "cachedResultName": "whatsapp_place_options",
+          "cachedResultUrl": "/projects/UulTCO4DzLs0ECv8/datatables/ZBdq8NYHweYlTZ1n"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "from",
+              "keyValue": "={{ $json.from }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        5216,
+        736
+      ],
+      "id": "7d698833-96a2-4551-99a0-e1c41bf5fce8",
+      "name": "Get place details"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.twilio.com/2010-04-01/Accounts/<accountSID>/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "From",
+              "value": "={{ $json.to }}"
+            },
+            {
+              "name": "To",
+              "value": "={{ $json.from }}"
+            },
+            {
+              "name": "Body",
+              "value": "={{ \"Option \" + $json.option + \"\\n\" + $json.name + \"\\n\" + $json.address + \"\\n\\nReply with \" + $json.option }}"
+            },
+            {
+              "name": "MediaUrl",
+              "value": "={{ $json.image_url }}"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 2000
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        7232,
+        192
+      ],
+      "id": "4fcf1d30-346f-46f7-ace6-eb756645cd26",
+      "name": "Send location images on whatsapp",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "Jm15E4fqwOOsrcud",
+          "name": "Twilio creds"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "useDataOfInput": 2
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        6336,
+        672
+      ],
+      "id": "90433806-594e-474e-ac49-9df3e1191f7b",
+      "name": "Merge2"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "ZBdq8NYHweYlTZ1n",
+          "mode": "list",
+          "cachedResultName": "whatsapp_place_options",
+          "cachedResultUrl": "/projects/UulTCO4DzLs0ECv8/datatables/ZBdq8NYHweYlTZ1n"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "from",
+              "keyValue": "={{ $json.from }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "last_lng": "={{ $json.lng }}",
+            "last_lat": "={{ $json.lat }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "from",
+              "displayName": "from",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "to",
+              "displayName": "to",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "options",
+              "displayName": "options",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "last_lat",
+              "displayName": "last_lat",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "last_lng",
+              "displayName": "last_lng",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        6560,
+        672
+      ],
+      "id": "7e71dfec-62e9-4b08-ade8-fb2e768d0d6f",
+      "name": "Store geocodes for next booking"
+    },
+    {
+      "parameters": {
+        "mode": "combineBySql",
+        "query": "SELECT i1.text, COALESCE(i2.last_lat,'') as last_lat ,COALESCE(i2.last_lng,'') as last_lng\n  FROM input1 i1\n  left JOIN input2 i2 ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        5440,
+        112
+      ],
+      "id": "26c31a42-16a5-4cef-9777-64f898008b9c",
+      "name": "Merge3"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "ZBdq8NYHweYlTZ1n",
+          "mode": "list",
+          "cachedResultName": "whatsapp_place_options",
+          "cachedResultUrl": "/projects/UulTCO4DzLs0ECv8/datatables/ZBdq8NYHweYlTZ1n"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "from",
+              "keyValue": "={{ $json.from }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        5216,
+        112
+      ],
+      "id": "3bff2b0f-52ec-4337-974d-c9dc74dc3665",
+      "name": "Get row(s)"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "mitanshi.app.n8n.cloud",
+            "user-agent": "TwilioProxy/1.1",
+            "content-length": "788",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "54.226.233.152",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "9b620ab706232d13-IAD",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/x-www-form-urlencoded",
+            "i-twilio-idempotency-token": "adbcb237-978b-4f48-87ee-f84bc48d106f",
+            "x-forwarded-for": "54.226.233.152, 172.71.223.203",
+            "x-forwarded-host": "mitanshi.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-50-54974b54fc-788ds",
+            "x-home-region": "us1",
+            "x-is-trusted": "yes",
+            "x-real-ip": "54.226.233.152",
+            "x-twilio-signature": "AOOluQ22gqQ96CFZepyVyccYspo="
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "MediaContentType0": "audio/ogg",
+            "SmsMessageSid": "MM7d1c9ac359d243a3388acb8d3ae32690",
+            "NumMedia": "1",
+            "ProfileName": "vaibhav gadiya",
+            "MessageType": "audio",
+            "SmsSid": "MM7d1c9ac359d243a3388acb8d3ae32690",
+            "WaId": "918972086738",
+            "SmsStatus": "received",
+            "Body": "",
+            "To": "whatsapp:+14155238886",
+            "NumSegments": "1",
+            "ReferralNumMedia": "0",
+            "MessageSid": "MM7d1c9ac359d243a3388acb8d3ae32690",
+            "AccountSid": "<accountSID>",
+            "ChannelMetadata": "{\"type\":\"whatsapp\",\"data\":{\"context\":{\"ProfileName\":\"vaibhav gadiya\",\"WaId\":\"918972086738\"}}}",
+            "From": "whatsapp:+918972086738",
+            "MediaUrl0": "https://api.twilio.com/2010-04-01/Accounts/<accountSID>/Messages/MM7d1c9ac359d243a3388acb8d3ae32690/Media/ME0a8ddccee7b04bd60efa8d09688064cf",
+            "ApiVersion": "2010-04-01"
+          },
+          "webhookUrl": "https://mitanshi.app.n8n.cloud/webhook/whatsapp-voice",
+          "executionMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "voice or text",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get from and to fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download voice note": {
+      "main": [
+        [
+          {
+            "node": "Transrcibe voice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transrcibe voice": {
+      "main": [
+        [
+          {
+            "node": "Extract & clean Transcript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Select top 3 locations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select top 3 locations": {
+      "main": [
+        [
+          {
+            "node": "Extract images links for the options",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store data": {
+      "main": [
+        [
+          {
+            "node": "Expand options",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add from & to fields": {
+      "main": [
+        [
+          {
+            "node": "Store data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get from and to fields": {
+      "main": [
+        [
+          {
+            "node": "Add from & to fields",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Get row(s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "voice or text": {
+      "main": [
+        [
+          {
+            "node": "Download voice note",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is non media?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate reply": {
+      "main": [
+        [
+          {
+            "node": "Get place details",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract images links for the options": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send cab link message on whatsapp": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create cab links message": {
+      "main": [
+        [
+          {
+            "node": "Send cab link message on whatsapp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is non media?": {
+      "main": [
+        [
+          {
+            "node": "Validate reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract & clean Transcript": {
+      "main": [
+        [
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Add from & to fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Create cab links message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Expand options": {
+      "main": [
+        [
+          {
+            "node": "Send location images on whatsapp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Expand options1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Get place details": {
+      "main": [
+        [
+          {
+            "node": "Expand options1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send location images on whatsapp": {
+      "main": [
+        []
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "Store geocodes for next booking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge3": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s)": {
+      "main": [
+        [
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "2e8a7154-2e50-4fff-a378-21bf66901276",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "406629f5a41ed49eec349aa9997a08596712218c80a8b661cc49b703e1d755b1"
+  },
+  "id": "mormOnYvG0bZIYny",
+  "tags": []
+}
