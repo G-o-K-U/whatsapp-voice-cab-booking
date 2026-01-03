@@ -6,15 +6,15 @@ This project was inspired by a real problem: my mother finds modern cab apps con
 
 # ✨ What this does
 
-🎤 User sends a voice note on WhatsApp (Hindi / Hinglish supported)
+🎤 User sends a voice note mentioning drop location on WhatsApp (Hindi / Hinglish / English supported)
 
 🧠 Voice is transcribed and cleaned (filler words removed)
 
-📍 Nearby places are searched using location context
+📍 Nearby places are searched using the user's location context
 
-🖼️ The top matches are returned as images (location Images / Static Maps)
+🖼️ The top matches are returned as images (Location Images / Static Maps)
 
-✅ User confirms the correct place
+✅ User confirms the correct drop location
 
 🚕 The flow can redirect into a cab-booking app with the selected location
 
