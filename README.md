@@ -20,28 +20,23 @@ This project was inspired by a real problem: my mother finds modern cab apps con
 
 No typing. No app installation. Just WhatsApp.
 
-# 🧩 Why this is interesting (beyond a demo)
+<img width="250" height="1000" alt="voice flow1" src="https://github.com/user-attachments/assets/64e45fb3-a911-4676-84d5-f90f9186f8b9" />   <img width="250" height="1000" alt="voice flow2" src="https://github.com/user-attachments/assets/0de2a27e-7d7a-4b2a-9e5e-27530c6f0c08" />   <img width="250" height="1000" alt="cab booking page" src="https://github.com/user-attachments/assets/2521a97e-935b-46af-a354-e0697da7139a" />
 
-This is not just an automation:
-- It handles real UX constraints of WhatsApp
-- It manages conversation state safely
-- It works around platform limitations (message ordering, media delivery)
-- It’s designed specifically for elder-friendly interaction
 
 # 🏗️ High-level Architecture
 
 ```
-WhatsApp (Twilio)
+WhatsApp (Twilio API)
    ↓
 Voice Message
    ↓
-Speech-to-Text (Deepgram)
+Speech-to-Text (Deepgram API)
    ↓
 Text Normalization (Hindi / Hinglish)
    ↓
-Google Places Search
+Google Places Search API
    ↓
-Image Generation (Places Photos / Static Maps)
+Image Retrieval (Places Photos / Static Maps)
    ↓
 WhatsApp Image Responses
    ↓
