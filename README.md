@@ -46,8 +46,8 @@ Send deep links for Uber/Ola rides
 ```
 Location Context
 
-If the user has previously completed a booking, the last confirmed pickup latitude/longitude is reused as context for future searches.
-This dramatically improves relevance without asking the user for location again.
+The last confirmed drop latitude/longitude, if available, is reused as context for future searches.
+This dramatically improves relevance without asking the user for their location.
 
 
 # 🔑 Key Design Decisions
