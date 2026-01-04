@@ -89,12 +89,12 @@ Rather than asking users to confirm text addresses, the system shows images and 
 
 ```
 .
-├── workflow.json        # Exported n8n workflow
+├── n8n workflow.json        # Exported n8n workflow
 ├── README.md            # Project overview (this file)
 └── assets/              # (Optional) screenshots / diagrams
 ```
 
-The workflow.json can be imported directly into n8n for exploration.
+The `n8n workflow.json` can be imported directly into n8n for exploration.
 
 # 🚀 Future Improvements
 - Replace n8n with a serverless backend for lower cost
